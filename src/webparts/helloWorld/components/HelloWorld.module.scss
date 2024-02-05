@@ -1,0 +1,44 @@
+@import '~@fluentui/react/dist/sass/References.scss';
+
+
+.yourWebPart {
+  .container {
+    margin: 10px;
+    width: 95%;
+  }
+
+  .square {
+    background-color: #1C6A33;
+    padding: 10px;
+    border: 3px solid white;
+    
+  }
+}
+
+.helloWorld {
+  overflow: hidden;
+  padding: 1em;
+  color: "[theme:bodyText, default: #323130]";
+  color: var(--bodyText);
+  &.teams {
+    font-family: $ms-font-family-fallbacks;
+  }
+}
+.welcomeImage {
+  width: 100%;
+  max-width: 420px;
+}
+
+.links {
+  a {
+    text-decoration: none;
+    color: white;
+    color: var(--link); // note: CSS Custom Properties support is limited to modern browsers only
+
+    &:hover {
+      text-decoration: underline;
+      color: "[theme:linkHovered, default: #014446]";
+      color: var(--linkHovered); // note: CSS Custom Properties support is limited to modern browsers only
+    }
+  }
+}
