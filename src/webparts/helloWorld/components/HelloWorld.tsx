@@ -92,7 +92,7 @@ const classNames = mergeStyleSets({
 });
 
 
-const onRenderCell = (item: any, index: number = -1, isScrolling: boolean | undefined, selectedIcon: string, items: any, iconset: string, service: SPService , results:any): JSX.Element => {
+const onRenderCell = (item: any, index: number = -1, isScrolling: boolean | undefined, selectedIcon: string, items: any, iconset: string, service: SPService, results: any): JSX.Element => {
   if (!item || !item.File || !item.File.Name) {
     // Handle the case where item or its properties are undefined (if applicable)
     return <div></div>;
@@ -105,13 +105,13 @@ const onRenderCell = (item: any, index: number = -1, isScrolling: boolean | unde
   // }
   return (
     <div className={classNames.itemCell} data-is-focusable={true}>
-      <i className={`ms-Icon ms-Icon--ArrowDownload48Filled`} />    
-      <FontIcon aria-label="Compass" iconName={iconset} className= {classNames.IconStyle} onClick={() => service.downloadFile("Shared%20Documents", "Classeur1.xlsx")} />
+      <i className={`ms-Icon ms-Icon--ArrowDownload48Filled`} />
+      <FontIcon aria-label="Compass" iconName={iconset} className={classNames.IconStyle} onClick={() => service.downloadFile("Shared%20Documents", "Classeur1.xlsx")} />
 
       <div className={classNames.itemContent}>
         <a
           href=""
-          className={`${classNames.itemName} ${classNames.hoverText}`}          
+          className={`${classNames.itemName} ${classNames.hoverText}`}
           style={{ color: 'inherit' }}
           onClick={() => service.downloadFile("Shared%20Documents", "Classeur1.xlsx")}
         >
@@ -130,7 +130,7 @@ const onRenderCell = (item: any, index: number = -1, isScrolling: boolean | unde
 interface IHelloWorldState {
   items: []; // Adjust the type based on the actual structure of your items
   listViewData: ISPLists[]
-  results:[]
+  results: []
 }
 
 interface IListGhostingExampleProps {
@@ -139,10 +139,10 @@ interface IListGhostingExampleProps {
   //downloadFile: (text: string) => void;
   iconset: string
   service: SPService
-  results:[]
-  
+  results: []
+
 }
-const ListGhostingExample: React.FunctionComponent<IListGhostingExampleProps> = ({ selectedIcon, items, iconset, service ,results}) => {
+const ListGhostingExample: React.FunctionComponent<IListGhostingExampleProps> = ({ selectedIcon, items, iconset, service, results }) => {
   // Create a constant list of items
   //const items = useConst(() => createListItems(5));
 
@@ -150,7 +150,7 @@ const ListGhostingExample: React.FunctionComponent<IListGhostingExampleProps> = 
   return (
     <FocusZone direction={FocusZoneDirection.vertical}>
       <div className={classNames.container} data-is-scrollable>
-        <List style={{ color: 'white' }} items={items} onRenderCell={(item, index, isScrolling) => onRenderCell(item, index, isScrolling, selectedIcon, items, iconset, service ,results)} />
+        <List style={{ color: 'white' }} items={items} onRenderCell={(item, index, isScrolling) => onRenderCell(item, index, isScrolling, selectedIcon, items, iconset, service, results)} />
       </div>
     </FocusZone>
   );
@@ -166,11 +166,13 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
     this.state = {
       items: [],
       listViewData: [],
-      results:[]
+      results: []
     };
 
     this.SPService = new SPService(this.props.context);
   }
+
+
 
   public getListViewData(): Promise<ISPLists[]> {
     return new Promise<ISPLists[]>((resolve, reject) => {
@@ -205,7 +207,53 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
         throw error;
       });
   }
+  public async getDocumentsWithCamlQuery(listId: string): Promise<any> {
+    //test2
+    try {
+      const apiUrl = `${this.props.context.pageContext.web.absoluteUrl}/_api/web/lists/getbyid('${listId}')/getitems?$select=Title,Modified,UniqueId,File/Name,File/Size,File/Length&$expand=File`;
+  
+      // Define the type of the query object
+      const query: any = {
+        ViewXml: '<View><Query><Where><Eq><FieldRef Name="ID" /><Value Type="Counter">18</Value></Eq></Where></Query></View>'
+      };
+  
+      const spHttpClientOptions: any = {
+        body: JSON.stringify({ query }),
+        headers: {
+          'Accept': 'application/json', // Corrected value for Accept header
+          'Content-Type': 'application/json'
+        }
+      };
+  
+      const response: SPHttpClientResponse = await this.props.context.spHttpClient.post(apiUrl, SPHttpClient.configurations.v1, spHttpClientOptions);
+  
+      if (!response.ok) {
+        const errorJson: any = await response.json();
+        throw new Error(errorJson.error ? errorJson.error.message : response.status.toString());
+      }
+  
+      const jsonData: any = await response.json();
+      console.log('Response data:', jsonData); // Log the response data
+      const returnValue = jsonData.value || jsonData;
+  
+      return returnValue;
+    } catch (error) {
+      console.error('Error retrieving documents:', error);
+      throw error;
+    }
+  }
+  
+  
+
+
+
   public componentDidMount(): void {
+    this.getDocumentsWithCamlQuery("fb979a32-a738-4388-9f81-81279c87841c")
+      .then(response => {
+        this.setState({ items: response });
+      }).catch(error => {
+        console.error("Error fetching documents:", error);
+      });
     this.getDocuments()
       .then(response => {
         this.setState({ items: response });

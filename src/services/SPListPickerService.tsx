@@ -82,23 +82,52 @@ export class SPService {
     
     if (listid && viewId) {
         // Add "FileLeafRef" to include the file name in the query
-        return sp.web.lists.getById(listid).views.getById(viewId).select("ViewQuery").get().then(v => {
+        return sp.web.lists.getById(listid).views.getById(viewId).select("ViewQuery").expand().get().then(v => {
             return v.ViewQuery;
         });
     } else {
-        console.log('Data insufficient!');
-        return Promise.reject('Data insufficient!'); // Return a rejected Promise with an error message
+        console.log('getViewQueryForList Error!');
+        return Promise.reject('getViewQueryForList Error!'); // Return a rejected Promise with an error message
     }
   }
   
 
-//Second method that retrieves the View data based on the View Query and List name
-public static getItemsByViewQuery(listid:string, query:string):Promise<any> {
-    
-    const xml = '<Query>' + query + '</Query>'; 
-    return sp.web.lists.getById(listid).getItemsByCAMLQuery({'ViewXml':xml}).then((res:SPHttpClientResponse) => {
-        return res;
-    })
+  public static getItemsByViewQuery(listid: string,query:Text): Promise<Array<any>> {
+    const xml = '<View><Query><Where><Eq><FieldRef Name="ID" /><Value Type="Counter">16</Value></Eq></Where></Query></View>';
+    return sp.web.lists.getById(listid).select('*').getItemsByCAMLQuery({ 'ViewXml': xml }).then((items: any[]) => {
+        // Modify this part to extract file and name values
+        const result = items.map(item => {
+            return {
+                id: item.Id,
+                title: item.Title,
+                file: item.File ? {
+                    name: item.File.Name,
+                    // Add other file properties as needed
+                } : null,
+                // Add other properties as needed
+            };
+        });
+        return result;
+    });
+}
+
+
+public static getItemsByViewQuery2(listid: string, query:Text): Promise<any> {
+  const viewXml = '<View><Query><Where><Eq><FieldRef Name="ID" /><Value Type="Counter">16</Value></Eq></Where></Query></View>';
+  return sp.web.lists.getById(listid).items.select('*').filter(viewXml).get().then((items: any[]) => {
+      const result = items.map(item => {
+          return {
+              id: item.Id,
+              title: item.Title,
+              file: item.File ? {
+                  name: item.File.Name,
+                  // Add other file properties as needed
+              } : null,
+              // Add other properties as needed
+          };
+      });
+      return result;
+  });
 }
 
 
@@ -122,6 +151,10 @@ getDocuments = (selectedlist:string): Promise<any> => {
       throw error;
     });
 }
+
+
+
+
 
 }
 
